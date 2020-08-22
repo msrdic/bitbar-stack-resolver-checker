@@ -1,0 +1,1 @@
+# bitbar-stack-resolver-checker
