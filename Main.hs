@@ -37,6 +37,7 @@ username = "msrdic"
 searchRepositoriesURL =
   "https://api.github.com/search/repositories?q=language:haskell+user:" ++ (DT.unpack username)
 rawPath = "https://raw.githubusercontent.com/{{reponame}}/master/stack.yaml"
+githubRepoURL = "https://github.com/{{reponame}}"
 
 main = do
   resp <- getLTSInfo
@@ -57,8 +58,10 @@ getRepoState repoName = do
     _   -> return $ (repoName, "Unknown")
 
 printRepoInfo lts (repoName, yamlInfo)
-  | lts == yamlInfo = putStrLn $ DT.unpack $ DT.concat [repoName, ": ", yamlInfo, "|color=green"]
-  | otherwise = putStrLn $ DT.unpack $ DT.concat [repoName, ": ", yamlInfo, "|color=red"]
+  | lts == yamlInfo = putStrLn $ DT.unpack $ DT.concat [repoName, ": ", yamlInfo, "|color=green", " href=", repoURL repoName]
+  | otherwise = putStrLn $ DT.unpack $ DT.concat [repoName, ": ", yamlInfo, "|color=red", " href=", repoURL repoName]
+
+repoURL repo = DT.replace "{{reponame}}" repo githubRepoURL
 
 extractStatusCode j = j ^. responseStatus . statusCode
 
