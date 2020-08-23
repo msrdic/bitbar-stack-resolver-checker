@@ -20,15 +20,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import           Control.Lens
+import           Control.Monad           (forM_)
 import           Data.Aeson.Lens
-import           Data.Maybe                      (fromMaybe)
+import           Data.Maybe              (fromMaybe)
 import qualified Data.Text               as DT
-import           Data.Text.Lazy.Encoding         (decodeUtf8)
-import           Data.Text.Lazy                  (toStrict)
-import           Network.Wreq
-import qualified Network.HTTP.Client     as HTTP 
+import           Data.Text.Lazy          (toStrict)
+import           Data.Text.Lazy.Encoding (decodeUtf8)
 import qualified Data.Vector             as DV
-import           Control.Monad                   (forM_)
+import qualified Network.HTTP.Client     as HTTP
+import           Network.Wreq
 
 main = do
   resolversResponse <- getLTSInfo
@@ -103,7 +103,7 @@ extractResolverVersion' (l:ls) | isCommentLine l  = extractResolverVersion' ls
 isCommentLine = ("#" `DT.isPrefixOf`)
 isResolverLine = ("resolver" `DT.isPrefixOf`)
 
-extractResolverValue l = 
+extractResolverValue l =
   let v1 = DT.dropWhile (/= ':') l
       v2 = DT.drop 1 v1
   in DT.strip v2
