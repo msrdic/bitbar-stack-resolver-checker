@@ -21,14 +21,14 @@
 
 import           Control.Lens
 import           Data.Aeson.Lens
-import           Data.Maybe              (fromMaybe)
-import qualified Data.Text          as DT
-import           Data.Text.Lazy.Encoding (decodeUtf8)
-import           Data.Text.Lazy          (toStrict)
+import           Data.Maybe                      (fromMaybe)
+import qualified Data.Text               as DT
+import           Data.Text.Lazy.Encoding         (decodeUtf8)
+import           Data.Text.Lazy                  (toStrict)
 import           Network.Wreq
-import qualified Network.HTTP.Client as HTTP
-import qualified Data.Vector        as DV
-import           Control.Monad           (forM_)
+import qualified Network.HTTP.Client     as HTTP 
+import qualified Data.Vector             as DV
+import           Control.Monad                   (forM_)
 
 main = do
   resolversResponse <- getLTSInfo
