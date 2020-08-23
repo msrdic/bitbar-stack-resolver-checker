@@ -70,14 +70,14 @@ repoURL repo = DT.replace "{{reponame}}" repo githubRepoURL
 
 extractStatusCode j = j ^. responseStatus . statusCode
 
-extractResolverLine rb =
-  let ls = DT.lines rb
-  in extractResolverLine' ls
-
+extractResolverLine rb = extractResolverLine' (DT.lines rb)
 extractResolverLine' [] = "?"
-extractResolverLine' (l:ls) | DT.isPrefixOf "#" l = extractResolverLine' ls
-                            | DT.isPrefixOf "resolver" l = extractResolverValue l
-                            | otherwise = extractResolverLine' ls
+extractResolverLine' (l:ls) | isCommentLine l  = extractResolverLine' ls
+                            | isResolverLine l = extractResolverValue l
+                            | otherwise        = extractResolverLine' ls
+
+isCommentLine = ("#" `DT.isPrefixOf`)
+isResolverLine = ("resolver" `DT.isPrefixOf`)
 
 extractResolverValue l = 
   let v1 = DT.dropWhile (/= ':') l
