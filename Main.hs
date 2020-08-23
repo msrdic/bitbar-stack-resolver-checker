@@ -32,10 +32,9 @@ import           Control.Monad.IO.Class        (liftIO)
 import Control.Monad (forM_)
 
 listLTSPath = "https://www.stackage.org/download/lts-snapshots.json"
-username :: DT.Text
 username = "msrdic"
 searchRepositoriesURL =
-  "https://api.github.com/search/repositories?q=language:haskell+user:" ++ DT.unpack username
+  "https://api.github.com/search/repositories?q=language:haskell+user:" ++ username
 rawPath = "https://raw.githubusercontent.com/{{reponame}}/master/stack.yaml"
 githubRepoURL = "https://github.com/{{reponame}}"
 
