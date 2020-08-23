@@ -8,12 +8,12 @@
   --package lens-aeson
 -}
 
--- <bitbar.title>Stackage LTS monitor</bitbar.title>
+-- <bitbar.title>Github projects stack resolver checker</bitbar.title>
 -- <bitbar.version>v0.1</bitbar.version>
 -- <bitbar.author>Mladen Srdić</bitbar.author>
 -- <bitbar.author.github>msrdic</bitbar.author.github>
 -- <bitbar.desc>
---   This plugin simply shows the latest LTS Stackage version in your menubar.
+     This plugin shows stack resolver versions for your public Haskell/Stack projects.
 -- </bitbar.desc>
 -- <bitbar.dependencies>haskell, stack</bitbar.dependencies>
 
@@ -21,17 +21,21 @@
 
 import           Control.Lens
 import           Data.Aeson.Lens
-import           Data.Maybe         (fromMaybe)
+import           Data.Maybe              (fromMaybe)
 import qualified Data.Text          as DT
-import Data.Text.Lazy.Encoding (decodeUtf8)
-import Data.Text.Lazy (toStrict)
+import           Data.Text.Lazy.Encoding (decodeUtf8)
+import           Data.Text.Lazy          (toStrict)
 import           Network.Wreq
 import qualified Network.HTTP.Client as HTTP
 import qualified Data.Vector        as DV
-import           Control.Monad.IO.Class        (liftIO)
-import Control.Monad (forM_)
+import           Control.Monad           (forM_)
 
-listLTSPath = "https://www.stackage.org/download/lts-snapshots.json"
+-- stack resolvers section
+resolversURL = "https://www.stackage.org/download/lts-snapshots.json"
+getLTSInfo = getWith defaults resolversURL
+extractLTS j = j ^. responseBody ^? key "lts" . _String
+
+-- github section
 username = "msrdic"
 searchRepositoriesURL =
   "https://api.github.com/search/repositories?q=language:haskell+user:" ++ username
@@ -39,11 +43,11 @@ rawPath = "https://raw.githubusercontent.com/{{reponame}}/master/stack.yaml"
 githubRepoURL = "https://github.com/{{reponame}}"
 
 main = do
-  resp <- getLTSInfo
-  ghRepos <- getRepositories
-  let lts = DT.unpack $ fromMaybe "?" $ extractLTS resp
+  resolversResponse <- getLTSInfo
+  let lts = DT.unpack $ fromMaybe "?" $ extractLTS resolversResponse
   putStrLn lts
   putStrLn "---"
+  ghRepos <- getRepositories
   let repos = extractRepositories ghRepos
       repoNames = DV.toList $ DV.map extractRepoName repos
       maxNameLen = Prelude.maximum $ Prelude.map DT.length repoNames
@@ -84,11 +88,9 @@ extractResolverValue l =
       v2 = DT.drop 1 v1
   in DT.dropAround (== ' ') v2
 
-extractLTS j = j ^. responseBody ^? key "lts" . _String
 extractRepositories j = j ^. responseBody ^. key "items" . _Array
 extractRepoName j = j ^. key "full_name" . _String
 
-getLTSInfo = getWith defaults listLTSPath
 getRepositories = getWith defaults searchRepositoriesURL
 getRawStackYaml repoName = do
   let yamlPath = toRawYamlPath rawPath repoName
