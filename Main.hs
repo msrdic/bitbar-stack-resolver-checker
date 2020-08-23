@@ -52,12 +52,14 @@ main = do
 
   ghReposResp <- getPublicHaskellRepositories
   let repos = extractRepositories ghReposResp
-      repoNames = DV.toList $ DV.map extractRepoName repos
-      maxNameLen = Prelude.maximum $ Prelude.map DT.length repoNames
-  forM_ repos (printSingleRepo lts maxNameLen)
+      repoNames = extractRepoNames repos
+      maxNameLen = longestRepoName repoNames
+  forM_ repoNames (printSingleRepo lts maxNameLen)
 
-printSingleRepo lts maxNameLen repo = do
-  let repoName = extractRepoName repo
+extractRepoNames = DV.toList . DV.map extractRepoName
+longestRepoName = Prelude.maximum . Prelude.map DT.length
+
+printSingleRepo lts maxNameLen repoName = do
   repoInfo <- getRepoState repoName
   printRepoInfo (DT.pack lts) maxNameLen repoInfo
 
