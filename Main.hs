@@ -44,19 +44,11 @@ githubRepoURL = "https://github.com/{{reponame}}"
 
 getPublicHaskellRepositories = getWith defaults searchRepositoriesURL
 
-main = do
-  resolversResponse <- getLTSInfo
-  let lts = DT.unpack $ fromMaybe "?" $ extractLTS resolversResponse
-  putStrLn lts
-  putStrLn "---"
-
-  ghReposResp <- getPublicHaskellRepositories
-  let repos = extractRepositories ghReposResp
-      repoNames = extractRepoNames repos
-      maxNameLen = longestRepoName repoNames
-  forM_ repoNames (printSingleRepo lts maxNameLen)
+extractRepositories j = j ^. responseBody ^. key "items" . _Array
 
 extractRepoNames = DV.toList . DV.map extractRepoName
+extractRepoName j = j ^. key "full_name" . _String
+
 longestRepoName = Prelude.maximum . Prelude.map DT.length
 
 printSingleRepo lts maxNameLen repoName = do
@@ -71,6 +63,18 @@ getRepoState repoName = do
     _   -> return (repoName, "?")
 
 bodyAsText = toStrict . decodeUtf8 . HTTP.responseBody
+
+main = do
+  resolversResponse <- getLTSInfo
+  let lts = DT.unpack $ fromMaybe "?" $ extractLTS resolversResponse
+  putStrLn lts
+  putStrLn "---"
+  ghReposResp <- getPublicHaskellRepositories
+  let repos = extractRepositories ghReposResp
+      repoNames = extractRepoNames repos
+      maxNameLen = longestRepoName repoNames
+  forM_ repoNames (printSingleRepo lts maxNameLen)
+
 printRepoInfo lts maxRepoNameLen (repoName, yamlInfo)
   | lts == yamlInfo = putStrLn $ DT.unpack $ DT.concat [repoName, repoPadding, " ", resolverPadding, yamlInfo, "|color=green", " href=", repoURL repoName, " font=Courier New"]
   | otherwise       = putStrLn $ DT.unpack $ DT.concat [repoName, repoPadding, " ", resolverPadding, yamlInfo, "|color=red", " href=", repoURL repoName, " font=Courier New"]
@@ -95,10 +99,7 @@ isResolverLine = ("resolver" `DT.isPrefixOf`)
 extractResolverValue l = 
   let v1 = DT.dropWhile (/= ':') l
       v2 = DT.drop 1 v1
-  in DT.dropAround (== ' ') v2
-
-extractRepositories j = j ^. responseBody ^. key "items" . _Array
-extractRepoName j = j ^. key "full_name" . _String
+  in DT.strip v2
 
 getRawStackYaml repoName = do
   let yamlPath = toRawYamlPath rawPath repoName
