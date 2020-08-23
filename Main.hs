@@ -55,9 +55,10 @@ getRepoState repoName = do
   yaml <- getRawStackYaml repoName
   let statusCode = extractStatusCode yaml
   case statusCode of
-    200 -> return (repoName, extractResolverLine $ toStrict $ decodeUtf8 $ HTTP.responseBody yaml)
+    200 -> return (repoName, extractResolverLine $ bodyAsText yaml)
     _   -> return (repoName, "?")
 
+bodyAsText = toStrict . decodeUtf8 . HTTP.responseBody
 printRepoInfo lts maxRepoNameLen (repoName, yamlInfo)
   | lts == yamlInfo = putStrLn $ DT.unpack $ DT.concat [repoName, repoPadding, " ", resolverPadding, yamlInfo, "|color=green", " href=", repoURL repoName, " font=Courier New"]
   | otherwise       = putStrLn $ DT.unpack $ DT.concat [repoName, repoPadding, " ", resolverPadding, yamlInfo, "|color=red", " href=", repoURL repoName, " font=Courier New"]
