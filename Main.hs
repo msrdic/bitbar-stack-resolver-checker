@@ -42,17 +42,24 @@ searchRepositoriesURL =
 rawPath = "https://raw.githubusercontent.com/{{reponame}}/master/stack.yaml"
 githubRepoURL = "https://github.com/{{reponame}}"
 
+getPublicHaskellRepositories = getWith defaults searchRepositoriesURL
+
 main = do
   resolversResponse <- getLTSInfo
   let lts = DT.unpack $ fromMaybe "?" $ extractLTS resolversResponse
   putStrLn lts
   putStrLn "---"
-  ghRepos <- getRepositories
-  let repos = extractRepositories ghRepos
+
+  ghReposResp <- getPublicHaskellRepositories
+  let repos = extractRepositories ghReposResp
       repoNames = DV.toList $ DV.map extractRepoName repos
       maxNameLen = Prelude.maximum $ Prelude.map DT.length repoNames
-  repoInfos <- mapM getRepoState repoNames
-  forM_ repoInfos (printRepoInfo (DT.pack lts) maxNameLen)
+  forM_ repos (printSingleRepo lts maxNameLen)
+
+printSingleRepo lts maxNameLen repo = do
+  let repoName = extractRepoName repo
+  repoInfo <- getRepoState repoName
+  printRepoInfo (DT.pack lts) maxNameLen repoInfo
 
 getRepoState repoName = do
   yaml <- getRawStackYaml repoName
@@ -91,7 +98,6 @@ extractResolverValue l =
 extractRepositories j = j ^. responseBody ^. key "items" . _Array
 extractRepoName j = j ^. key "full_name" . _String
 
-getRepositories = getWith defaults searchRepositoriesURL
 getRawStackYaml repoName = do
   let yamlPath = toRawYamlPath rawPath repoName
   getWith (defaults & checkResponse .~ Just (\_ _ -> return ()))
