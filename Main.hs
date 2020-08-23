@@ -29,6 +29,7 @@ import           Network.Wreq
 import qualified Network.HTTP.Client as HTTP
 import qualified Data.Vector        as DV
 import           Control.Monad.IO.Class        (liftIO)
+import Control.Monad (forM_)
 
 listLTSPath = "https://www.stackage.org/download/lts-snapshots.json"
 username :: DT.Text
@@ -48,7 +49,7 @@ main = do
       repoNames = DV.toList $ DV.map extractRepoName repos
       maxNameLen = Prelude.maximum $ Prelude.map DT.length repoNames
   repoInfos <- mapM getRepoState repoNames
-  mapM_ (printRepoInfo (DT.pack lts) maxNameLen) repoInfos
+  forM_ repoInfos (printRepoInfo (DT.pack lts) maxNameLen)
 
 getRepoState repoName = do
   yaml <- getRawStackYaml repoName
