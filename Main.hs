@@ -30,6 +30,17 @@ import qualified Network.HTTP.Client as HTTP
 import qualified Data.Vector        as DV
 import           Control.Monad           (forM_)
 
+main = do
+  resolversResponse <- getLTSInfo
+  let lts = DT.unpack $ fromMaybe "?" $ extractLTS resolversResponse
+  putStrLn lts
+  putStrLn "---"
+  ghReposResp <- getPublicHaskellRepositories
+  let repos = extractRepositories ghReposResp
+      repoNames = extractRepoNames repos
+      maxNameLen = longestRepoName repoNames
+  forM_ repoNames (printSingleRepo lts maxNameLen)
+
 -- stack resolvers section
 resolversURL = "https://www.stackage.org/download/lts-snapshots.json"
 getLTSInfo = getWith defaults resolversURL
@@ -56,24 +67,22 @@ printSingleRepo lts maxNameLen repoName = do
   printRepoInfo (DT.pack lts) maxNameLen repoInfo
 
 getRepoState repoName = do
-  yaml <- getRawStackYaml repoName
-  let statusCode = extractStatusCode yaml
+  yamlResp <- getRawStackYaml repoName
+  let statusCode = extractStatusCode yamlResp
   case statusCode of
-    200 -> return (repoName, extractResolverLine $ bodyAsText yaml)
+    200 -> let resolverVersion = extractResolverVersion $ bodyAsText yamlResp
+           in return (repoName, resolverVersion)
     _   -> return (repoName, "?")
 
-bodyAsText = toStrict . decodeUtf8 . HTTP.responseBody
+getRawStackYaml repoName = do
+  let yamlPath = toRawYamlPath rawPath repoName
+  getWith (defaults & ignoreNon200) $ DT.unpack yamlPath
 
-main = do
-  resolversResponse <- getLTSInfo
-  let lts = DT.unpack $ fromMaybe "?" $ extractLTS resolversResponse
-  putStrLn lts
-  putStrLn "---"
-  ghReposResp <- getPublicHaskellRepositories
-  let repos = extractRepositories ghReposResp
-      repoNames = extractRepoNames repos
-      maxNameLen = longestRepoName repoNames
-  forM_ repoNames (printSingleRepo lts maxNameLen)
+toRawYamlPath path repoName = DT.replace "{{reponame}}" repoName path
+ignoreNon200 = checkResponse .~ Just (\_ _ -> return ())
+
+extractStatusCode j = j ^. responseStatus . statusCode
+bodyAsText = toStrict . decodeUtf8 . HTTP.responseBody
 
 printRepoInfo lts maxRepoNameLen (repoName, yamlInfo)
   | lts == yamlInfo = putStrLn $ DT.unpack $ DT.concat [repoName, repoPadding, " ", resolverPadding, yamlInfo, "|color=green", " href=", repoURL repoName, " font=Courier New"]
@@ -85,13 +94,11 @@ printRepoInfo lts maxRepoNameLen (repoName, yamlInfo)
 
 repoURL repo = DT.replace "{{reponame}}" repo githubRepoURL
 
-extractStatusCode j = j ^. responseStatus . statusCode
-
-extractResolverLine rb = extractResolverLine' (DT.lines rb)
-extractResolverLine' [] = "?"
-extractResolverLine' (l:ls) | isCommentLine l  = extractResolverLine' ls
-                            | isResolverLine l = extractResolverValue l
-                            | otherwise        = extractResolverLine' ls
+extractResolverVersion rb = extractResolverVersion' (DT.lines rb)
+extractResolverVersion' [] = "?"
+extractResolverVersion' (l:ls) | isCommentLine l  = extractResolverVersion' ls
+                               | isResolverLine l = extractResolverValue l
+                               | otherwise        = extractResolverVersion' ls
 
 isCommentLine = ("#" `DT.isPrefixOf`)
 isResolverLine = ("resolver" `DT.isPrefixOf`)
@@ -100,12 +107,3 @@ extractResolverValue l =
   let v1 = DT.dropWhile (/= ':') l
       v2 = DT.drop 1 v1
   in DT.strip v2
-
-getRawStackYaml repoName = do
-  let yamlPath = toRawYamlPath rawPath repoName
-  getWith (defaults & checkResponse .~ Just (\_ _ -> return ()))
-    $ DT.unpack yamlPath
-
-toRawYamlPath :: DT.Text -> DT.Text -> DT.Text
-toRawYamlPath path repoName = 
-  DT.replace "{{reponame}}" repoName path
