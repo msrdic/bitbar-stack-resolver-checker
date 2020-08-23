@@ -13,7 +13,7 @@
 -- <bitbar.author>Mladen Srdić</bitbar.author>
 -- <bitbar.author.github>msrdic</bitbar.author.github>
 -- <bitbar.desc>
-     This plugin shows stack resolver versions for your public Haskell/Stack projects.
+--     This plugin shows stack resolver versions for your public Haskell/Stack projects.
 -- </bitbar.desc>
 -- <bitbar.dependencies>haskell, stack</bitbar.dependencies>
 
