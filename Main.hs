@@ -26,7 +26,7 @@ import           Data.Maybe              (fromMaybe)
 import qualified Data.Text               as T
 import           Data.Text.Lazy          (toStrict)
 import           Data.Text.Lazy.Encoding (decodeUtf8)
-import qualified Data.Vector             as DV
+import qualified Data.Vector             as V
 import qualified Network.HTTP.Client     as HTTP
 import           Network.Wreq
 
@@ -57,7 +57,7 @@ getPublicHaskellRepositories = getWith defaults searchRepositoriesURL
 
 extractRepositories j = j ^. responseBody ^. key "items" . _Array
 
-extractRepoNames = DV.toList . DV.map extractRepoName
+extractRepoNames = V.toList . V.map extractRepoName
 extractRepoName j = j ^. key "full_name" . _String
 
 longestRepoName = Prelude.maximum . Prelude.map T.length
