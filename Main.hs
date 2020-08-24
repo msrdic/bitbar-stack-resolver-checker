@@ -23,7 +23,7 @@ import           Control.Lens
 import           Control.Monad           (forM_)
 import           Data.Aeson.Lens
 import           Data.Maybe              (fromMaybe)
-import qualified Data.Text               as DT
+import qualified Data.Text               as T
 import           Data.Text.Lazy          (toStrict)
 import           Data.Text.Lazy.Encoding (decodeUtf8)
 import qualified Data.Vector             as DV
@@ -32,7 +32,7 @@ import           Network.Wreq
 
 main = do
   resolversResponse <- getLTSInfo
-  let lts = DT.unpack $ fromMaybe "?" $ extractLTS resolversResponse
+  let lts = T.unpack $ fromMaybe "?" $ extractLTS resolversResponse
   putStrLn lts
   putStrLn "---"
   ghReposResp <- getPublicHaskellRepositories
@@ -60,11 +60,11 @@ extractRepositories j = j ^. responseBody ^. key "items" . _Array
 extractRepoNames = DV.toList . DV.map extractRepoName
 extractRepoName j = j ^. key "full_name" . _String
 
-longestRepoName = Prelude.maximum . Prelude.map DT.length
+longestRepoName = Prelude.maximum . Prelude.map T.length
 
 printSingleRepo lts maxNameLen repoName = do
   repoInfo <- getRepoState repoName
-  printRepoInfo (DT.pack lts) maxNameLen repoInfo
+  printRepoInfo (T.pack lts) maxNameLen repoInfo
 
 getRepoState repoName = do
   yamlResp <- getRawStackYaml repoName
@@ -76,31 +76,31 @@ getRepoState repoName = do
 
 getRawStackYaml repoName = do
   let yamlPath = toRawYamlPath rawPath repoName
-  getWith (defaults & ignoreNon200) $ DT.unpack yamlPath
+  getWith (defaults & ignoreNon200) $ T.unpack yamlPath
 
-toRawYamlPath path repoName = DT.replace "{{reponame}}" repoName path
+toRawYamlPath path repoName = T.replace "{{reponame}}" repoName path
 ignoreNon200 = checkResponse .~ Just (\_ _ -> return ())
 
 extractStatusCode j = j ^. responseStatus . statusCode
 bodyAsText = toStrict . decodeUtf8 . HTTP.responseBody
 
 printRepoInfo lts maxRepoNameLen (repoName, yamlInfo)
-  | lts == yamlInfo = putStrLn $ DT.unpack $ DT.concat [repoName, repoPadding, " ", resolverPadding, yamlInfo, "|color=green", " href=", repoURL repoName, " font=Courier New"]
-  | otherwise       = putStrLn $ DT.unpack $ DT.concat [repoName, repoPadding, " ", resolverPadding, yamlInfo, "|color=red", " href=", repoURL repoName, " font=Courier New"]
-  where k = maxRepoNameLen - DT.length repoName
-        p = DT.length lts - DT.length yamlInfo
-        repoPadding = DT.pack $ replicate k ' '
-        resolverPadding = DT.pack $ replicate p ' '
+  | lts == yamlInfo = putStrLn $ T.unpack $ T.concat [repoName, repoPadding, " ", resolverPadding, yamlInfo, "|color=green", " href=", repoURL repoName, " font=Courier New"]
+  | otherwise       = putStrLn $ T.unpack $ T.concat [repoName, repoPadding, " ", resolverPadding, yamlInfo, "|color=red", " href=", repoURL repoName, " font=Courier New"]
+  where k = maxRepoNameLen - T.length repoName
+        p = T.length lts - T.length yamlInfo
+        repoPadding = T.pack $ replicate k ' '
+        resolverPadding = T.pack $ replicate p ' '
 
-repoURL repo = DT.replace "{{reponame}}" repo githubRepoURL
+repoURL repo = T.replace "{{reponame}}" repo githubRepoURL
 
-extractResolverVersion rb = extractResolverVersion' (DT.lines rb)
+extractResolverVersion rb = extractResolverVersion' (T.lines rb)
 extractResolverVersion' [] = "?"
 extractResolverVersion' (l:ls) | isCommentLine l  = extractResolverVersion' ls
                                | isResolverLine l = extractResolverValue l
                                | otherwise        = extractResolverVersion' ls
 
-isCommentLine = ("#" `DT.isPrefixOf`)
-isResolverLine = ("resolver" `DT.isPrefixOf`)
+isCommentLine = ("#" `T.isPrefixOf`)
+isResolverLine = ("resolver" `T.isPrefixOf`)
 
-extractResolverValue = DT.strip . DT.drop 1 . DT.dropWhile (/= ':')
+extractResolverValue = T.strip . T.drop 1 . T.dropWhile (/= ':')
