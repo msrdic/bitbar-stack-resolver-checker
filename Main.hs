@@ -89,8 +89,8 @@ printRepoInfo lts maxRepoNameLen (repoName, yamlInfo)
   | otherwise       = putStrLn $ T.unpack $ T.concat [repoName, repoPadding, " ", resolverPadding, yamlInfo, "|color=red", " href=", repoURL repoName, " font=Courier New"]
   where k = maxRepoNameLen - T.length repoName
         p = T.length lts - T.length yamlInfo
-        repoPadding = T.pack $ replicate k ' '
-        resolverPadding = T.pack $ replicate p ' '
+        repoPadding = T.replicate k " "
+        resolverPadding = T.replicate p " "
 
 repoURL repo = T.replace "{{reponame}}" repo githubRepoURL
 
