@@ -103,7 +103,4 @@ extractResolverVersion' (l:ls) | isCommentLine l  = extractResolverVersion' ls
 isCommentLine = ("#" `DT.isPrefixOf`)
 isResolverLine = ("resolver" `DT.isPrefixOf`)
 
-extractResolverValue l =
-  let v1 = DT.dropWhile (/= ':') l
-      v2 = DT.drop 1 v1
-  in DT.strip v2
+extractResolverValue = DT.strip . DT.drop 1 . DT.dropWhile (/= ':')
