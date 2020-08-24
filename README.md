@@ -15,9 +15,9 @@ If you don't already have it, stack will install ghc(i) and needed dependencies 
 
 ## Usage
 
- 1. copy `Main.hs` to your Bitbar plugins folder
- 2. rename to `<something>.<update_period>.hs`
- 3. make executable (`chmod +x`)
- 4. replace the username value with your own ([right now it says](https://github.com/msrdic/bitbar-stack-resolver-checker/blob/master/Main.hs#L50) `username = "msrdic"`, which will show my Haskell repos)
-
 More information about BitBar and installing plugins can be found [here](https://github.com/matryer/bitbar#installing-plugins).
+
+ 1. copy `Main.hs` to your Bitbar plugins folder
+ 2. replace the username value with your own ([right now it says](https://github.com/msrdic/bitbar-stack-resolver-checker/blob/master/Main.hs#L50) `username = "msrdic"`, which will show my Haskell repos)
+ 3. rename to `<something>.<update_period>.hs`
+ 4. make executable (`chmod +x`)
