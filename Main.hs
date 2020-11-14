@@ -49,7 +49,7 @@ extractLTS j = j ^. responseBody ^? key "lts" . _String
 -- github section
 username = "msrdic"
 searchRepositoriesURL =
-  "https://api.github.com/search/repositories?q=language:haskell+user:" ++ username
+  "https://api.github.com/search/repositories?q=language:haskell+fork:true+user:" ++ username
 rawPath = "https://raw.githubusercontent.com/{{reponame}}/master/stack.yaml"
 githubRepoURL = "https://github.com/{{reponame}}"
 
@@ -85,8 +85,8 @@ extractStatusCode j = j ^. responseStatus . statusCode
 bodyAsText = toStrict . decodeUtf8 . HTTP.responseBody
 
 printRepoInfo lts maxRepoNameLen (repoName, yamlInfo)
-  | lts == yamlInfo = putStrLn $ T.unpack $ T.concat [repoName, repoPadding, " ", resolverPadding, yamlInfo, "|color=green", " href=", repoURL repoName, " font=Courier New"]
-  | otherwise       = putStrLn $ T.unpack $ T.concat [repoName, repoPadding, " ", resolverPadding, yamlInfo, "|color=red", " href=", repoURL repoName, " font=Courier New"]
+  | lts == yamlInfo = putStrLn $ T.unpack $ T.concat [repoName, repoPadding, " ", resolverPadding, yamlInfo, "|color=#0ba33b", " href=", repoURL repoName, " font=Courier New"]
+  | otherwise       = putStrLn $ T.unpack $ T.concat [repoName, repoPadding, " ", resolverPadding, yamlInfo, "|color=#9e1d0e", " href=", repoURL repoName, " font=Courier New"]
   where k = maxRepoNameLen - T.length repoName
         p = T.length lts - T.length yamlInfo
         repoPadding = T.replicate k " "
